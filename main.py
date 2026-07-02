@@ -1,6 +1,10 @@
 import pypdf
 import os
 from PIL import Image
+from fpdf import FPDF
+import markdown2
+import pdfkit
+from markdown_pdf import MarkdownPdf, Section
 
 root = os.path.curdir() # Set as dummy rn
 
@@ -35,15 +39,35 @@ if extension_map[file_type] == "image":
         out_file = pypdf.PdfWriter(clone_from=read_file)
         out_file.encrypt(f"{user_name[:4]}")
     # Return the out_file to user and remove the temp_file and out_file
+    if os.path.exists(temp_save_path):
+        os.remove(temp_save_path)
 
 # Handle text
 if extension_map[file_type] == "text":
-    pass
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    with open(path, "r", encoding="utf-8") as file:
+        for line in file:
+            pdf.cell(text=line, ln=True, align = "L")
+    pdf.output(temp_save_path)
+
+
+    with open(temp_save_path, "r") as pdf_file:
+        read_file = pdf_file.read()  
+        out_file = pypdf.PdfWriter(clone_from=read_file)
+        out_file.encrypt(f"{user_name[:4]}")
+    if os.path.exists(temp_save_path):
+        os.remove(temp_save_path)
+
 
 
 # Handle pdf
 if extension_map[file_type] == "pdf":
-    pass
+    with open(path, "r") as pdf_file:
+        read_file = pdf_file.read()  
+        out_file = pypdf.PdfWriter(clone_from=read_file)
+        out_file.encrypt(f"{user_name[:4]}")
 
 
 # Handle doc
@@ -53,7 +77,20 @@ if extension_map[file_type] == "doc":
 
 # Handle markdown
 if extension_map[file_type] == "markdown":
-    pass
+    pdf = MarkdownPdf(toc_level=2)
+    with open(path, "r", encoding="utf-8") as file:
+        markdown_content = file.read()
+    pdf.add_section(Section(markdown_content))
+    pdf.save(temp_save_path)
+
+    with open(temp_save_path, "r") as pdf_file:
+        read_file = pdf_file.read()  
+        out_file = pypdf.PdfWriter(clone_from=read_file)
+        out_file.encrypt(f"{user_name[:4]}")
+    
+    if os.path.exists(temp_save_path):
+        os.remove(temp_save_path)
+
 
 
 # with open(path, "r") as file:
