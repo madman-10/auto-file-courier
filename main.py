@@ -27,7 +27,7 @@ def process_image(input_file_bytes: bytes, user_name: str, temp_dir: str) -> tup
 
         # Read the generated PDF bytes
         with open(temp_path, "rb") as pdf_file:
-            read_file = pdf_file.read()  
+            read_file = BytesIO(pdf_file.read())
             out_file = pypdf.PdfWriter(clone_from=read_file)
             out_file.encrypt(f"{user_name[:4]}")
             final_pdf_bytes = BytesIO()
@@ -62,7 +62,8 @@ def process_text(input_file_bytes: bytes, user_name: str, temp_dir: str) -> tupl
 
         # Read the generated PDF bytes
         with open(temp_save_path, "rb") as pdf_file:
-            read_file = pdf_file.read()  
+            # Wrap the raw bytes in BytesIO so pypdf can 'seek' through it
+            read_file = BytesIO(pdf_file.read())  
             out_file = pypdf.PdfWriter(clone_from=read_file)
             out_file.encrypt(f"{user_name[:4]}")
             final_pdf_bytes = BytesIO()
@@ -108,7 +109,7 @@ def process_markdown(input_file_bytes: bytes, user_name: str, temp_dir: str) -> 
 
         # Read the generated PDF bytes
         with open(temp_save_path, "rb") as pdf_file:
-            read_file = pdf_file.read()  
+            read_file = BytesIO(pdf_file.read())
             out_file = pypdf.PdfWriter(clone_from=read_file)
             out_file.encrypt(f"{user_name[:4]}")
 
@@ -139,8 +140,9 @@ def process_file(uploaded_file, user_name: str):
     if uploaded_file is None:
         return None, "No file was uploaded."
 
+    user_name = user_name.upper()
     # 1. Setup temporary environment
-    temp_dir = os.path.join("temp_processing", f"{user_name}")#_{date}")
+    temp_dir = os.path.join("temp_processing", f"{user_name}")
     os.makedirs(temp_dir, exist_ok=True)
     
     file_extension = get_file_extension(uploaded_file.name)
