@@ -124,7 +124,7 @@ def process_markdown(input_file_bytes: bytes, user_name: str, temp_dir: str) -> 
         return None, ""
 
 
-def process_file(uploaded_file, user_name: str, date: str):
+def process_file(uploaded_file, user_name: str):
     """
     Main orchestration function to process the uploaded file based on its type.
 
@@ -140,7 +140,7 @@ def process_file(uploaded_file, user_name: str, date: str):
         return None, "No file was uploaded."
 
     # 1. Setup temporary environment
-    temp_dir = os.path.join("temp_processing", f"{user_name}_{date}")
+    temp_dir = os.path.join("temp_processing", f"{user_name}")#_{date}")
     os.makedirs(temp_dir, exist_ok=True)
     
     file_extension = get_file_extension(uploaded_file.name)
