@@ -132,7 +132,6 @@ def process_file(uploaded_file, user_name: str):
     Args:
         uploaded_file: The Streamlit UploadedFile object.
         user_name: The name of the user for encryption/naming.
-        date: The date string for naming.
 
     Returns:
         A tuple containing (bytes_content, result_message) or (None, error_message).

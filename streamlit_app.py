@@ -1,81 +1,65 @@
 import streamlit as st
-import pandas as pd
+from main import process_file # main.py file where the process of handling the files is stored/created
 
-# --- Configuration ---
-st.set_page_config(
-    page_title="Auto File Courier Dashboard", 
-    layout="wide"
-)
 
-def main():
-    """
-    Main function to run the Streamlit application logic.
-    This dashboard will display file courier status and metrics.
-    """
-    st.title("📦 Auto File Courier System")
-    st.markdown("""
-        Welcome to the centralized dashboard for tracking file courier operations. 
-        Use the sidebar to select different views or filters.
-    """)
+# Page configuration
+st.set_page_config(page_title="File to Encrypted PDF", page_icon="🔒")
 
-    # --- Sidebar for Filters/Controls ---
-    with st.sidebar:
-        st.header("Filters & Controls")
-        
-        # Example filter: Select date range
-        start_date = st.date_input("Start Date", type="datetime", value=pd.Timestamp('today').date())
-        end_date = st.date_input("End Date", type="datetime", value=pd.Timestamp('today').date())
+st.title("🔒 File to Encrypted PDF Converter")
+st.write("""
+Upload a document or image, and this app will convert it to a PDF (if necessary) 
+and encrypt it. **Note:** The password to open your PDF will be the **first 4 characters** of the name you provide.
+""")
 
-        # Example filter: Select courier status
-        status = st.selectbox(
-            "Courier Status", 
-            options=["In Transit", "Delivered", "Pending Pickup", "Exception"]
-        )
-        
-        st.markdown("---")
-        if st.button("Refresh Data"):
-            st.success("Data refresh initiated...")
+st.divider()
 
-    # --- Main Content Area ---
+# Input Form
+with st.form("file_processor_form"):
+    st.subheader("1. Enter Details")
+    user_name = st.text_input("Your Name", placeholder="e.g., John Doe", max_chars=50)
     
-    # 1. Key Metrics (KPIs)
-    st.header("📊 Overview Metrics")
-    col1, col2, col3, col4 = st.columns(4)
+    st.subheader("2. Upload File")
+    # Limiting to extensions supported by your backend
+    uploaded_file = st.file_uploader(
+        "Choose a file", 
+        type=["jpg", "png", "txt", "pdf", "md"]
+    )
+    
+    submit_button = st.form_submit_button("Encrypt & Process")
 
-    with col1:
-        st.metric("Total Files Processed", "1,250", delta="15%")
-    with col2:
-        st.metric("Pending Deliveries", "45", delta="-5")
-    with col3:
-        st.metric("Average Transit Time", "2 days", delta="0.5 day")
-    with col4:
-        st.metric("Exception Rate", "1.2%", delta="< 0.5%")
-
-    # 2. Data Visualization (Example)
-    st.header("📈 File Status Distribution")
-    try:
-        # Placeholder for actual data loading/processing
-        data = {
-            'Status': ['Delivered', 'In Transit', 'Pending Pickup', 'Exception'],
-            'Count': [1000, 125, 70, 3]
-        }
-        df = pd.DataFrame(data)
-        st.bar_chart(df.set_index('Status')['Count'])
-    except Exception as e:
-        st.warning(f"Could not display chart (Error: {e}).")
-
-    # 3. Detailed Data Table
-    st.header("📋 Recent Shipments Log")
-    # Placeholder for a detailed data table
-    log_data = {
-        'Tracking ID': ['TRK1001', 'TRK1002', 'TRK1003'],
-        'Origin': ['NYC', 'LAX', 'CHI'],
-        'Destination': ['MIA', 'DAL', 'SEA'],
-        'Status': ['Delivered', 'In Transit', 'Exception'],
-        'Last Updated': pd.to_datetime(['2026-07-01', '2026-07-02', '2026-07-02'])
-    }
-    st.dataframe(pd.DataFrame(log_data), use_container_width=True)
-
-
-if __name__ == "__main__":
-    main()
+# Processing Logic
+if submit_button:
+    # Validation
+    if not user_name:
+        st.error("Please enter a name.")
+    elif len(user_name) < 4:
+        st.warning("Please enter a name with at least 4 characters for encryption.")
+    elif not uploaded_file:
+        st.error("Please upload a file to process.")
+    else:
+        with st.spinner("Processing and encrypting your file..."):
+            # Call backend function
+            result_bytes, message = process_file(uploaded_file, user_name)
+            
+            # Handle results
+            if result_bytes:
+                st.success(f"File processed successfully! ({message})")
+                
+                # Display password for user clarity
+                password = user_name[:4].upper()
+                st.info(f"🔑 **Important:** The password to open this PDF will be the first 4 letters of your name, all *caps*.")
+                
+                # Generate dynamic filename
+                original_name = uploaded_file.name.rsplit('.', 1)[0]
+                new_filename = f"{original_name}_encrypted.pdf"
+                
+                # Provide download button
+                st.download_button(
+                    label="⬇️ Download Encrypted PDF",
+                    data=result_bytes,
+                    file_name=new_filename,
+                    mime="application/pdf",
+                    type="primary"
+                )
+            else:
+                st.error(f"Failed to process file: {message}")
