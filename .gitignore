@@ -6,3 +6,4 @@ to-do.txt
 /my_local_files
 /processed_pdfs
 .env
+n8n-oauth.json
